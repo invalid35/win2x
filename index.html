@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#04100e">
+    <meta name="description" content="Win2x cards, dice, and rewards browser demo.">
+    <title>Win2x — Cards &amp; Dice</title>
+    <link rel="stylesheet" href="style (1).css">
+    <link rel="stylesheet" href="win767.css">
+    <style>
+        .daily-reward-dialog {
+            width: min(440px, calc(100% - 32px));
+            padding: 0;
+            border: 1px solid rgba(93, 226, 187, .5);
+            border-radius: 18px;
+            background: #091a17;
+            color: #e9fff8;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, .65), 0 0 40px rgba(93, 226, 187, .14);
+        }
+
+        .daily-reward-dialog::backdrop {
+            background: rgba(0, 8, 6, .78);
+            backdrop-filter: blur(5px);
+        }
+
+        .daily-reward-content {
+            display: grid;
+            justify-items: center;
+            gap: 14px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .daily-reward-content h2,
+        .daily-reward-content p {
+            margin: 0;
+        }
+
+        .daily-reward-kicker {
+            color: #5de2bb;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .16em;
+        }
+
+        .daily-reward-value {
+            width: 100%;
+            display: grid;
+            gap: 5px;
+            padding: 16px;
+            border: 1px solid rgba(93, 226, 187, .26);
+            border-radius: 12px;
+            background: rgba(45, 205, 164, .08);
+        }
+
+        .daily-reward-value strong {
+            color: #a7ffe4;
+            font-size: 24px;
+        }
+
+        .daily-reward-value small,
+        .daily-reward-note {
+            color: #91b9ae;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .daily-reward-content { padding: 24px 18px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="#" onclick="showPage('dashboard'); return false;">
+                <span class="brand-mark" aria-hidden="true">✦</span>
+                <span class="brand-name">WIN<span>2X</span></span>
+            </a>
+            <div class="nav-links" id="mainNav" hidden>
+                <a href="#" onclick="showPage('dashboard'); return false;">Overview</a>
+                <a href="#" onclick="showPage('cards'); return false;">Cards</a>
+                <a href="#" onclick="showPage('dice'); return false;">Dice</a>
+                <a href="#" onclick="showPage('roulette'); return false;">Roulette</a>
+                <a href="#" id="redeemNav" onclick="showPage('redeem'); return false;">Redeem credits</a>
+                <a href="#" onclick="showPage('cashout'); return false;">Cash out</a>
+                <a href="#" id="adminNav" onclick="showPage('admin'); return false;" hidden>Admin</a>
+            </div>
+            <div class="nav-account" id="accountNav" hidden>
+                <span class="nav-user" id="navUsername"></span>
+                <a class="nav-logout" href="#" onclick="logout(); return false;">Log out</a>
+            </div>
+            <div class="nav-links" id="guestNav">
+                <a href="#" onclick="showPage('login'); return false;">Log in</a>
+                <a class="nav-signup" href="#" onclick="showPage('register'); return false;">Join now</a>
+                <a href="#admin-login" onclick="showPage('adminLogin'); return false;">Admin sign in</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="page-shell">
+        <div class="flash-list" id="flash" role="status" aria-live="polite"></div>
+        <div class="flash demo-note">Accounts are saved in this browser’s database on this device. This demo database is not synced or secure for real accounts. Cash-outs are simulated only.</div>
+
+        <section id="loginPage" class="auth-layout page">
+            <div class="auth-intro">
+                <span class="eyebrow">YOUR SEAT IS READY</span>
+                <h1>Good games.<br><span>Good company.</span></h1>
+                <p>Sign in to pick up where you left off and see what’s on the table.</p>
+                <div class="suit-decoration" aria-hidden="true">♠ &nbsp; ♥ &nbsp; ♦ &nbsp; ♣</div>
+            </div>
+            <div class="panel auth-panel">
+                <span class="eyebrow">WELCOME BACK</span>
+                <h2>Log in</h2>
+                <p class="muted">Enter your details to continue.</p>
+                <form id="loginForm" class="form-stack">
+                    <label for="loginUsername">Username</label>
+                    <input id="loginUsername" autocomplete="username" placeholder="Your username" required>
+                    <label for="loginPassword">Password</label>
+                    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password" required>
+                    <button class="button button-primary button-wide" type="submit">Log in <span aria-hidden="true">→</span></button>
+                </form>
+                <p class="auth-switch">New around here? <a href="#" onclick="showPage('register'); return false;">Create an account</a></p>
+                <p class="auth-switch"><a href="#admin-login" onclick="showPage('adminLogin'); return false;">Administrator sign in</a></p>
+            </div>
+        </section>
+
+        <section id="adminLoginPage" class="auth-layout page" hidden>
+            <div class="auth-intro">
+                <span class="eyebrow">HOUSE MANAGEMENT</span>
+                <h1>Administrator<br><span>sign in.</span></h1>
+                <p>This separate portal is for the two administrator accounts only.</p>
+            </div>
+            <div class="panel auth-panel">
+                <span class="eyebrow">ADMIN PORTAL</span>
+                <h2>Admin sign in</h2>
+                <p class="muted">Use your administrator username and password.</p>
+                <form id="adminLoginForm" class="form-stack">
+                    <label for="adminLoginUsername">Username</label>
+                    <input id="adminLoginUsername" autocomplete="username" placeholder="Administrator username" required>
+                    <label for="adminLoginPassword">Password</label>
+                    <input id="adminLoginPassword" type="password" autocomplete="current-password" placeholder="Your password" required>
+                    <button class="button button-primary button-wide" type="submit">Sign in <span aria-hidden="true">→</span></button>
+                </form>
+                <p class="auth-switch"><a href="#" onclick="showPage('login'); return false;">Back to player sign in</a></p>
+            </div>
+        </section>
+
+        <section id="registerPage" class="auth-layout page" hidden>
+            <div class="auth-intro">
+                <span class="eyebrow">PULL UP A CHAIR</span>
+                <h1>Your next<br><span>favorite game.</span></h1>
+                <p>Create an account and join the table. Your games and credits will be ready whenever you are.</p>
+                <div class="suit-decoration" aria-hidden="true">♠ &nbsp; ♥ &nbsp; ♦ &nbsp; ♣</div>
+            </div>
+            <div class="panel auth-panel">
+                <span class="eyebrow">GET STARTED</span>
+                <h2>Create account</h2>
+                <p class="muted">Choose a username and a password of at least 8 characters.</p>
+                <form id="registerForm" class="form-stack">
+                    <label for="registerUsername">Username</label>
+                    <input id="registerUsername" autocomplete="username" placeholder="Choose a username" required>
+                    <label for="registerPassword">Password</label>
+                    <input id="registerPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
+                    <label for="registerReferralCode">Referral code <span class="muted">(optional)</span></label>
+                    <input id="registerReferralCode" autocomplete="off" autocapitalize="characters" placeholder="Enter a friend’s code">
+                    <label for="registerBonusCode">Bonus signup code <span class="muted">(optional)</span></label>
+                    <input id="registerBonusCode" autocomplete="off" autocapitalize="characters" placeholder="Enter a signup bonus code">
+                    <button class="button button-primary button-wide" type="submit">Create account <span aria-hidden="true">→</span></button>
+                </form>
+                <p class="auth-switch">Already have an account? <a href="#" onclick="showPage('login'); return false;">Log in</a></p>
+            </div>
+        </section>
+
+        <section id="dashboardPage" class="page" hidden>
+            <div class="welcome-row">
+                <div>
+                    <span class="eyebrow">PLAYER LOUNGE</span>
+                    <h1>Welcome back, <span id="dashboardUsername"></span>.</h1>
+                    <p class="muted">Pick a table and enjoy a quick game.</p>
+                </div>
+                <div class="balance-card">
+                    <span class="eyebrow">YOUR BALANCE</span>
+                    <strong id="dashboardCredits">0</strong>
+                    <span class="balance-caption">credits · 1 credit = $1.00 USD demo value</span>
+                </div>
+            </div>
+            <section class="panel reward-summary">
+                <div>
+                    <span class="eyebrow">DAILY LOGIN REWARD</span>
+                    <h2 id="loginStreak">0-day streak</h2>
+                    <p class="muted" id="dailyRewardStatus">Log in daily for 1 credit. Every third consecutive day earns a guaranteed roulette spin.</p>
+                </div>
+                <div class="reward-spins"><span class="eyebrow">GUARANTEED SPINS</span><strong id="dashboardSpins">0</strong></div>
+            </section>
+            <section class="panel referral-panel">
+                <div>
+                    <span class="eyebrow">INVITE A FRIEND</span>
+                    <h2>Your referral code</h2>
+                    <p class="muted">You and a new player each get 10 credits when they sign up with your code.</p>
+                </div>
+                <div class="referral-code-row">
+                    <code id="dashboardReferralCode"></code>
+                    <button class="button button-secondary button-small" id="copyReferralCode" type="button">Copy code</button>
+                </div>
+            </section>
+            <div class="game-grid" aria-label="Choose a game">
+                <a class="game-card" href="#" onclick="showPage('cards'); return false;">
+                    <span class="game-icon cards-icon" aria-hidden="true">♠</span>
+                    <span class="game-info"><span class="eyebrow">CARD DRAW</span><strong>Multiplier cards</strong><span>Choose your odds and draw.</span></span>
+                    <span class="game-arrow" aria-hidden="true">↗</span>
+                </a>
+                <a class="game-card" href="#" onclick="showPage('dice'); return false;">
+                    <span class="game-icon dice-icon" aria-hidden="true">⚄</span>
+                    <span class="game-info"><span class="eyebrow">QUICK PLAY</span><strong>Two-dice payouts</strong><span>Roll for a 2× or 3× payout.</span></span>
+                    <span class="game-arrow" aria-hidden="true">↗</span>
+                </a>
+                <a class="game-card" href="#" onclick="showPage('roulette'); return false;">
+                    <span class="game-icon roulette-icon" aria-hidden="true">◉</span>
+                    <span class="game-info"><span class="eyebrow">FREE SPINS</span><strong>Credit roulette</strong><span>Win credits, a code, or extra spins.</span></span>
+                    <span class="game-arrow" aria-hidden="true">↗</span>
+                </a>
+                <a class="game-card" href="#" onclick="showPage('cashout'); return false;">
+                    <span class="game-icon cash-icon" aria-hidden="true">↗</span>
+                    <span class="game-info"><span class="eyebrow">YOUR ACCOUNT</span><strong>Cash out</strong><span>Manage demo requests.</span></span>
+                    <span class="game-arrow" aria-hidden="true">↗</span>
+                </a>
+            </div>
+        </section>
+
+        <section id="cardsPage" class="page" hidden>
+            <div class="game-heading">
+                <a class="back-link" href="#" onclick="showPage('dashboard'); return false;">← Back to overview</a>
+                <span class="eyebrow">THE CARD TABLE</span>
+                <h1>Pick your <span class="heading-amp">suit</span></h1>
+                <p class="muted">Bet on red, black, or a joker. Red and black pay 2×; a joker pays 8×.</p>
+            </div>
+            <aside class="game-rules" aria-label="Card game rules">
+                <span class="eyebrow">GAME RULES</span>
+                <ul>
+                    <li>Bet on red (hearts or diamonds), black (clubs or spades), or joker.</li>
+                    <li>A matching red or black card pays 2× your bet; a joker pays 8×.</li>
+                    <li>The 54-card deck is reshuffled after every four pulls. Payouts include your bet.</li>
+                </ul>
+            </aside>
+            <div class="play-layout">
+                <div class="playing-surface">
+                    <div class="playing-surface-top"><span>♠ &nbsp; ♥ &nbsp; WIN2X &nbsp; ♦ &nbsp; ♣</span><span>🃏</span></div>
+                    <div class="confetti-layer" id="cardsConfetti" aria-hidden="true"></div>
+                    <div class="card-pair">
+                        <div class="playing-card card-back" id="playerCard" aria-label="Your drawn card"><span>WIN2X</span><strong>♠ ♥</strong><small>♦ ♣</small></div>
+                        <span class="versus">YOUR BET</span>
+                        <div class="playing-card card-target" id="dealerCard" aria-label="Your selected bet"><span>BET ON</span><strong>RED</strong><small>2× PAYOUT</small></div>
+                    </div>
+                    <p class="table-caption" id="cardsTableCaption">Pick a color or joker and draw a card · 4 pulls per shuffle</p>
+                </div>
+                <div class="panel bet-panel">
+                    <span class="eyebrow">PLACE YOUR BET</span>
+                    <h2>Ready to play?</h2>
+                    <div class="balance-line"><span>Your credits</span><strong id="cardsCredits">0 cr</strong></div>
+                    <div class="balance-line"><span>Selected payout</span><strong id="cardsReward">2×</strong></div>
+                    <form id="cardsForm" class="form-stack bet-form">
+                        <label for="cardsBet">Bet amount</label>
+                        <div class="input-suffix"><input id="cardsBet" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Enter credits" required><span>CR</span></div>
+                        <label for="cardsBetType">Choose your bet</label>
+                        <select id="cardsBetType" required>
+                            <option value="red">Red (♥ ♦) · 2×</option>
+                            <option value="black">Black (♣ ♠) · 2×</option>
+                            <option value="joker">Joker · 8×</option>
+                        </select>
+                        <p class="multiplier-summary" id="cardsOdds" aria-live="polite"></p>
+                        <button class="button button-primary button-wide" type="submit">Draw a card <span aria-hidden="true">→</span></button>
+                    </form>
+                    <p class="game-note">Standard 52-card deck plus 2 jokers · Reshuffled every 4 pulls · Client-side demo.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="dicePage" class="page" hidden>
+            <div class="game-heading">
+                <a class="back-link" href="#" onclick="showPage('dashboard'); return false;">← Back to overview</a>
+                <span class="eyebrow">THE DICE TABLE</span>
+                <h1>Roll <span class="heading-amp">two dice</span></h1>
+                <p class="muted">Totals below or above 7 pay 2×; exactly 7 pays 3×.</p>
+            </div>
+            <aside class="game-rules" aria-label="Dice game rules">
+                <span class="eyebrow">GAME RULES</span>
+                <ul>
+                    <li>Place a whole-number bet, then roll two six-sided dice.</li>
+                    <li>A total below 7 or above 7 pays 2× your bet.</li>
+                    <li>A total of exactly 7 pays 3× your bet. Payouts include your bet.</li>
+                </ul>
+            </aside>
+            <div class="play-layout">
+                <div class="playing-surface dice-surface">
+                    <div class="playing-surface-top"><span>⚄ &nbsp; WIN2X</span><span>⚅</span></div>
+                    <div class="confetti-layer" id="diceConfetti" aria-hidden="true"></div>
+                    <div class="dice-pair">
+                        <div class="dice-roll-pair">
+                            <div class="die" id="playerDice" aria-label="First die" aria-live="polite">⚄</div>
+                            <div class="die" id="playerDiceSecond" aria-label="Second die" aria-live="polite">⚅</div>
+                        </div>
+                        <div class="dice-total"><span>TOTAL</span><strong id="diceTotal" aria-live="polite">—</strong></div>
+                    </div>
+                    <p class="table-caption" id="diceTableCaption">Roll two dice: totals other than 7 pay 2×; exactly 7 pays 3×.</p>
+                </div>
+                <div class="panel bet-panel">
+                    <span class="eyebrow">PLACE YOUR BET</span>
+                    <h2>Feeling lucky?</h2>
+                    <div class="balance-line"><span>Your credits</span><strong id="diceCredits">0 cr</strong></div>
+                    <div class="balance-line"><span>Payout</span><strong id="diceReward">2× or 3×</strong></div>
+                    <form id="diceForm" class="form-stack bet-form">
+                        <label for="diceBet">Bet amount</label>
+                        <div class="input-suffix"><input id="diceBet" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Enter credits" required><span>CR</span></div>
+                        <p class="multiplier-summary" id="diceOdds" aria-live="polite"></p>
+                        <button class="button button-primary button-wide" type="submit">Roll dice <span aria-hidden="true">→</span></button>
+                    </form>
+                    <p class="game-note">Two independent crypto-random dice · Client-side demo, not server-auditable.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="cashoutPage" class="page" hidden>
+            <div class="game-heading">
+                <a class="back-link" href="#" onclick="showPage('dashboard'); return false;">← Back to overview</a>
+                <span class="eyebrow">YOUR ACCOUNT</span>
+                <h1>Cash out</h1>
+                <p class="muted">Create a simulated payout request using your available credits.</p>
+            </div>
+            <section class="panel cashout-panel">
+                <div class="cashout-intro">
+                    <span class="game-icon cash-icon" aria-hidden="true">↗</span>
+                    <div><span class="eyebrow">AVAILABLE BALANCE</span><h2><span id="cashoutCredits">0</span> <span class="muted">credits</span></h2></div>
+                </div>
+                <form id="cashoutForm" class="cashout-form">
+                    <div class="form-stack"><label for="cashoutAmount">Amount to request</label><div class="input-suffix"><input id="cashoutAmount" type="number" min="1" step="1" placeholder="Enter credits" required><span>CR</span></div><p class="rate-note">1 credit = $1.00 USD demo value. No real payout is made.</p><p class="rate-note" id="cashoutUsd" aria-live="polite"></p></div>
+                    <button class="button button-primary" type="submit">Request code <span aria-hidden="true">→</span></button>
+                </form>
+            </section>
+            <section class="panel history-panel">
+                <div class="section-heading"><div><span class="eyebrow">REQUEST HISTORY</span><h2>Your requests</h2></div></div>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Amount</th><th>Code</th><th>Status</th><th>Created</th></tr></thead>
+                    <tbody id="cashoutHistory"></tbody>
+                </table></div>
+            </section>
+        </section>
+
+        <section id="redeemPage" class="page" hidden>
+            <div class="game-heading">
+                <a class="back-link" href="#" onclick="showPage('dashboard'); return false;">← Back to overview</a>
+                <span class="eyebrow">CREDIT REDEMPTION</span>
+                <h1>Redeem a <span class="heading-amp">code</span></h1>
+                <p class="muted">Enter a one-time code to add credits to your account. 1 credit = $1.00 USD demo value; this is not cash or a real payout.</p>
+            </div>
+            <section class="panel cashout-panel">
+                <div class="cashout-intro">
+                    <span class="game-icon cash-icon" aria-hidden="true">+</span>
+                    <div><span class="eyebrow">AVAILABLE BALANCE</span><h2><span id="redeemCredits">0</span> <span class="muted">credits</span></h2></div>
+                </div>
+                <form id="redeemForm" class="cashout-form">
+                    <div class="form-stack"><label for="redeemCode">Credit code</label><input id="redeemCode" autocomplete="off" autocapitalize="characters" placeholder="Enter your code" required></div>
+                    <button class="button button-primary" type="submit">Redeem credits <span aria-hidden="true">→</span></button>
+                </form>
+            </section>
+        </section>
+
+        <section id="roulettePage" class="page" hidden>
+            <div class="game-heading">
+                <a class="back-link" href="#" onclick="showPage('dashboard'); return false;">← Back to overview</a>
+                <span class="eyebrow">THE REWARDS WHEEL</span>
+                <h1>Credit <span class="heading-amp">roulette</span></h1>
+                <p class="muted">Use a guaranteed spin to win credits, a redeemable bonus code, or another guaranteed spin. Spins are free.</p>
+            </div>
+            <div class="play-layout">
+                <div class="playing-surface roulette-surface">
+                    <div class="playing-surface-top"><span>✦ &nbsp; WIN2X REWARDS</span><span id="rouletteSpinCount">0 SPINS</span></div>
+                    <div class="confetti-layer" id="rouletteConfetti" aria-hidden="true"></div>
+                    <div class="roulette-wheel" id="rouletteWheel" role="img" aria-label="Roulette prize wheel with credit, code, and extra-spin prizes">
+                        <span class="roulette-label roulette-label-1" aria-hidden="true">5 CR</span>
+                        <span class="roulette-label roulette-label-2" aria-hidden="true">10 CR</span>
+                        <span class="roulette-label roulette-label-3" aria-hidden="true">25 CR</span>
+                        <span class="roulette-label roulette-label-4" aria-hidden="true">50 CR</span>
+                        <span class="roulette-label roulette-label-5" aria-hidden="true">CODE</span>
+                        <span class="roulette-label roulette-label-6" aria-hidden="true">+1</span>
+                        <span class="roulette-label roulette-label-7" aria-hidden="true">+2</span>
+                        <div class="roulette-wheel-center">SPIN<br><span>TO WIN</span></div>
+                    </div>
+                    <p class="table-caption" id="rouletteResult" aria-live="polite">Every spin wins: 5–50 credits, a 25-credit code, or 1–2 guaranteed spins.</p>
+                </div>
+                <div class="panel bet-panel">
+                    <span class="eyebrow">YOUR REWARDS</span>
+                    <h2>Spin for a prize</h2>
+                    <div class="balance-line"><span>Your credits</span><strong id="rouletteCredits">0 cr</strong></div>
+                    <div class="balance-line"><span>Guaranteed spins</span><strong id="rouletteSpins">0</strong></div>
+                    <button class="button button-primary button-wide" id="rouletteSpinButton" type="button">Spin the wheel <span aria-hidden="true">→</span></button>
+                    <p class="game-note">Every prize is awarded. Bonus codes are one-time use and can be redeemed on the credit redemption page.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="adminPage" class="page" hidden>
+            <div class="game-heading">
+                <a class="back-link" href="#" onclick="showPage('dashboard'); return false;">← Back to overview</a>
+                <span class="eyebrow">HOUSE MANAGEMENT</span>
+                <h1>Admin panel</h1>
+                <p class="muted">Manage player accounts, issue credit codes, and review simulated requests.</p>
+            </div>
+            <section class="panel history-panel">
+                <div class="section-heading"><div><span class="eyebrow">ADMIN ACCESS</span><h2>Administrator accounts</h2></div><span class="muted" id="adminAccountCount"></span></div>
+                <p class="muted">There can be at most two administrator accounts. Only an administrator can create the second account.</p>
+                <form id="createAdminForm" class="credit-form admin-create-form">
+                    <div class="form-stack"><label for="newAdminUsername">Second admin username</label><input id="newAdminUsername" autocomplete="off" placeholder="Choose a username" required></div>
+                    <div class="form-stack"><label for="newAdminPassword">Password</label><input id="newAdminPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required></div>
+                    <button class="button button-primary" type="submit">Create admin account</button>
+                </form>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Username</th><th>Account</th></tr></thead>
+                    <tbody id="adminAccountList"></tbody>
+                </table></div>
+            </section>
+            <section class="panel history-panel">
+                <div class="section-heading"><div><span class="eyebrow">CREDIT CODES</span><h2>Issue credits</h2></div></div>
+                <p class="muted">Create a one-time credit or signup bonus code. Credit codes are redeemed on the player page; signup codes are entered during registration.</p>
+                <form id="createCreditCodeForm" class="credit-form credit-code-form">
+                    <div class="form-stack"><label for="adminCodeType">Code type</label><select id="adminCodeType" required><option value="credit">Redeemable credit code</option><option value="signup">Signup bonus code</option></select></div>
+                    <div class="form-stack"><label for="adminCodeAmount">Credits in code</label><input id="adminCodeAmount" type="number" min="1" step="1" placeholder="Enter credits" required></div>
+                    <button class="button button-primary" type="submit">Generate code</button>
+                </form>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Code</th><th>Type</th><th>Credits</th><th>Status</th><th>Used by</th></tr></thead>
+                    <tbody id="adminCreditCodes"></tbody>
+                </table></div>
+            </section>
+            <section class="panel history-panel">
+                <div class="section-heading"><div><span class="eyebrow">ACCOUNT DATABASE</span><h2>Player accounts</h2></div><span class="muted" id="accountCount"></span></div>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Username</th><th>Created</th><th>Credits</th><th>Games</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="adminAccounts"></tbody>
+                </table></div>
+            </section>
+            <section class="panel history-panel">
+                <div class="section-heading"><div><span class="eyebrow">GAME ACTIVITY</span><h2>Player game history</h2></div></div>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>User</th><th>Game</th><th>Bet</th><th>Draw</th><th>Result</th><th>Payout</th><th>Date</th></tr></thead>
+                    <tbody id="adminGameHistory"></tbody>
+                </table></div>
+            </section>
+            <section class="panel history-panel">
+                <div class="section-heading"><div><span class="eyebrow">PLAYER ACCOUNTS</span><h2>Add demo credits</h2></div></div>
+                <form id="creditsForm" class="credit-form">
+                    <div class="form-stack"><label for="adminUserSelect">Player</label><select id="adminUserSelect" required></select></div>
+                    <div class="form-stack"><label for="adminCreditAmount">Credits to add</label><input id="adminCreditAmount" type="number" min="1" placeholder="Enter amount" required></div>
+                    <button class="button button-primary" type="submit">Add credits</button>
+                </form>
+            </section>
+            <section class="panel history-panel admin-requests">
+                <div class="section-heading"><div><span class="eyebrow">REVIEW</span><h2>Pending requests</h2></div></div>
+                <div class="table-wrap"><table>
+                    <thead><tr><th>User</th><th>Amount</th><th>Code</th><th>Created</th><th>Actions</th></tr></thead>
+                    <tbody id="adminCashouts"></tbody>
+                </table></div>
+            </section>
+        </section>
+    </main>
+
+    <dialog class="daily-reward-dialog" id="dailyRewardDialog" aria-labelledby="dailyRewardTitle" aria-describedby="dailyRewardDetails">
+        <div class="daily-reward-content">
+            <span class="daily-reward-kicker">✦ &nbsp; DAILY REWARD</span>
+            <h2 id="dailyRewardTitle">Welcome to Win2x!</h2>
+            <p id="dailyRewardDetails"></p>
+            <div class="daily-reward-value">
+                <strong id="dailyRewardAmount">+1 credit</strong>
+                <small id="dailyRewardValue">= $1.00 USD demo value</small>
+            </div>
+            <p class="daily-reward-note" id="dailyRewardSpin"></p>
+            <button class="button button-primary button-wide" id="dailyRewardClose" type="button">Continue playing <span aria-hidden="true">→</span></button>
+        </div>
+    </dialog>
+
+    <footer class="site-footer">
+        <span>WIN2X</span>
+        <span>Browser demo · No real money or payouts</span>
+    </footer>
+
+    <script>
+        "use strict";
+
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_PASSWORD = "admin123";
+        const STORAGE_KEY = "houseplay-demo-v1";
+        const DATABASE_NAME = "houseplay-accounts";
+        const DATABASE_VERSION = 2;
+        const PASSWORD_ITERATIONS = 210000;
+        let database;
+        let databaseReady = false;
+        let currentUser = null;
+        let activePage = "login";
+
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
+                request.onupgradeneeded = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains("accounts")) {
+                        db.createObjectStore("accounts", { keyPath: "key" });
+                    }
+                    if (!db.objectStoreNames.contains("cashouts")) {
+                        db.createObjectStore("cashouts", { keyPath: "id" });
+                    }
+                    if (!db.objectStoreNames.contains("settings")) {
+                        db.createObjectStore("settings", { keyPath: "key" });
+                    }
+                    if (!db.objectStoreNames.contains("creditCodes")) {
+                        db.createObjectStore("creditCodes", { keyPath: "id" });
+                    }
+                };
+                request.onsuccess = () => {
+                    request.result.onversionchange = () => request.result.close();
+                    resolve(request.result);
+                };
+                request.onerror = () => reject(request.error || new Error("Could not open the account database."));
+                request.onblocked = () => reject(new Error("The account database is blocked by another open tab. Close other Win2x tabs and reload."));
+            });
+        }
+
+        function requestResult(request) {
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error || new Error("The database request failed."));
+            });
+        }
+
+        function transactionDone(transaction) {
+            return new Promise((resolve, reject) => {
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error || new Error("The database transaction failed."));
+                transaction.onabort = () => reject(transaction.error || new Error("The database transaction was cancelled."));
+            });
+        }
+
+        async function passwordDigest(password, salt) {
+            const encoder = new TextEncoder();
+            const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
+            const bits = await crypto.subtle.deriveBits({
+                name: "PBKDF2",
+                salt,
+                iterations: PASSWORD_ITERATIONS,
+                hash: "SHA-256"
+            }, key, 256);
+            return Array.from(new Uint8Array(bits), byte => byte.toString(16).padStart(2, "0")).join("");
+        }
+
+        async function hashPassword(password) {
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const digest = await passwordDigest(password, salt);
+            return {
+                passwordSalt: Array.from(salt, byte => byte.toString(16).padStart(2, "0")).join(""),
+                passwordHash: digest
+            };
+        }
+
+        async function verifyPassword(password, user) {
+            if (!user.passwordSalt || !user.passwordHash) return false;
+            const salt = Uint8Array.from(user.passwordSalt.match(/.{2}/g), byte => parseInt(byte, 16));
+            return (await passwordDigest(password, salt)) === user.passwordHash;
+        }
+
+        function normalizeAccount(user) {
+            const { password, ...account } = user;
+            const username = String(user.username || "").trim();
+            return {
+                ...account,
+                key: username.toLowerCase(),
+                username,
+                credits: Number.isFinite(user.credits) && user.credits >= 0 ? Math.round(user.credits * 100) / 100 : 0,
+                history: Array.isArray(user.history) ? user.history : [],
+                createdAt: user.createdAt || new Date().toISOString(),
+                disabled: Boolean(user.disabled),
+                referralCode: typeof user.referralCode === "string" ? user.referralCode : "",
+                referredBy: typeof user.referredBy === "string" ? user.referredBy : "",
+                lastLoginDate: typeof user.lastLoginDate === "string" ? user.lastLoginDate : "",
+                loginStreak: Number.isSafeInteger(user.loginStreak) && user.loginStreak >= 0 ? user.loginStreak : 0,
+                rouletteSpins: Number.isSafeInteger(user.rouletteSpins) && user.rouletteSpins >= 0 ? user.rouletteSpins : 0
+            };
+        }
+
+        async function migrateLegacyData() {
+            const legacy = localStorage.getItem(STORAGE_KEY);
+            if (!legacy) return null;
+
+            let saved;
+            try {
+                saved = JSON.parse(legacy);
+            } catch (error) {
+                throw new Error("Existing browser account data could not be read, so it was left unchanged.");
+            }
+
+            const users = [];
+            const accountKeys = new Set();
+            for (const oldUser of Array.isArray(saved.users) ? saved.users : []) {
+                const account = normalizeAccount({
+                    ...oldUser,
+                    ...await hashPassword(String(oldUser.password || ""))
+                });
+                if (!account.key || accountKeys.has(account.key)) {
+                    throw new Error("Existing accounts contain duplicate usernames that differ only by capitalization. Resolve the duplicate before migrating.");
+                }
+                accountKeys.add(account.key);
+                users.push(account);
+            }
+            return {
+                users,
+                cashouts: Array.isArray(saved.cashouts) ? saved.cashouts : [],
+                adminAccounts: [],
+                creditCodes: [],
+                reward: Number.isSafeInteger(saved.reward) && saved.reward >= 0 ? saved.reward : 10
+            };
+        }
+
+        async function loadState() {
+            database = await openDatabase();
+            const transaction = database.transaction(["accounts", "cashouts", "settings", "creditCodes"], "readonly");
+            const [users, cashouts, setting, secondaryAdmin, creditCodes, cardDeckSetting] = await Promise.all([
+                requestResult(transaction.objectStore("accounts").getAll()),
+                requestResult(transaction.objectStore("cashouts").getAll()),
+                requestResult(transaction.objectStore("settings").get("winReward")),
+                requestResult(transaction.objectStore("settings").get("secondaryAdmin")),
+                requestResult(transaction.objectStore("creditCodes").getAll()),
+                requestResult(transaction.objectStore("settings").get("cardDeck"))
+            ]);
+            await transactionDone(transaction);
+
+            const loaded = {
+                users: users.map(normalizeAccount),
+                cashouts,
+                adminAccounts: secondaryAdmin ? [secondaryAdmin.value] : [],
+                creditCodes,
+                cardDeck: cardDeckSetting ? cardDeckSetting.value : null,
+                reward: setting && Number.isSafeInteger(setting.value) && setting.value >= 0 ? setting.value : 10
+            };
+
+            if (!users.length) {
+                const legacy = await migrateLegacyData();
+                if (legacy && (legacy.users.length || legacy.cashouts.length || legacy.reward !== 10)) {
+                    state = legacy;
+                    await saveState();
+                    localStorage.removeItem(STORAGE_KEY);
+                    return state;
+                }
+            }
+            return loaded;
+        }
+
+        async function saveState() {
+            const transaction = database.transaction(["accounts", "cashouts", "settings", "creditCodes"], "readwrite");
+            const accountsStore = transaction.objectStore("accounts");
+            const cashoutsStore = transaction.objectStore("cashouts");
+            const settingsStore = transaction.objectStore("settings");
+            const creditCodesStore = transaction.objectStore("creditCodes");
+            accountsStore.clear();
+            cashoutsStore.clear();
+            creditCodesStore.clear();
+            state.users.forEach(user => accountsStore.put(normalizeAccount(user)));
+            state.cashouts.forEach(request => cashoutsStore.put(request));
+            state.creditCodes.forEach(code => creditCodesStore.put(code));
+            settingsStore.put({ key: "winReward", value: state.reward });
+            if (state.cardDeck) settingsStore.put({ key: "cardDeck", value: state.cardDeck });
+            if (state.adminAccounts.length) {
+                settingsStore.put({ key: "secondaryAdmin", value: state.adminAccounts[0] });
+            } else {
+                settingsStore.delete("secondaryAdmin");
+            }
+            await transactionDone(transaction);
+        }
+
+        let state = { users: [], cashouts: [], adminAccounts: [], creditCodes: [], cardDeck: null, reward: 10 };
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, character => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            })[character]);
+        }
+
+        function showMessage(message, isError = false) {
+            const flash = document.getElementById("flash");
+            flash.innerHTML = `<div class="flash${isError ? " flash-error" : ""}">${escapeHtml(message)}</div>`;
+        }
+
+        function clearMessage() {
+            document.getElementById("flash").replaceChildren();
+        }
+
+        function userByName(username) {
+            return state.users.find(user => user.username.toLowerCase() === username.toLowerCase());
+        }
+
+        function formatCredits(amount) {
+            return Number(amount).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function secureRandomInt(maxExclusive) {
+            if (!Number.isInteger(maxExclusive) || maxExclusive < 1 || maxExclusive > 0x100000000) {
+                throw new Error("Invalid random draw range.");
+            }
+            const range = 0x100000000;
+            const limit = Math.floor(range / maxExclusive) * maxExclusive;
+            const values = new Uint32Array(1);
+            do {
+                crypto.getRandomValues(values);
+            } while (values[0] >= limit);
+            return values[0] % maxExclusive;
+        }
+
+        function generateCodeId() {
+            const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let code;
+            do {
+                const characters = Array.from({ length: 12 }, () => alphabet[secureRandomInt(alphabet.length)]);
+                code = `W2X-${characters.slice(0, 4).join("")}-${characters.slice(4, 8).join("")}-${characters.slice(8).join("")}`;
+            } while (state.creditCodes.some(item => item.id === code));
+            return code;
+        }
+
+        function generateReferralCode() {
+            const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let code;
+            do {
+                code = `REF-${Array.from({ length: 8 }, () => alphabet[secureRandomInt(alphabet.length)]).join("")}`;
+            } while (state.users.some(user => user.referralCode === code));
+            return code;
+        }
+
+        function formatUsd(credits) {
+            return Number(credits).toLocaleString(undefined, {
+                style: "currency",
+                currency: "USD",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        const ROULETTE_PRIZES = [
+            { type: "credits", amount: 5, label: "5 credits" },
+            { type: "credits", amount: 10, label: "10 credits" },
+            { type: "credits", amount: 25, label: "25 credits" },
+            { type: "credits", amount: 50, label: "50 credits" },
+            { type: "code", amount: 25, label: "25-credit bonus code" },
+            { type: "spins", amount: 1, label: "+1 guaranteed spin" },
+            { type: "spins", amount: 2, label: "+2 guaranteed spins" }
+        ];
+
+        const CARD_SUITS = [
+            { name: "Clubs", symbol: "♣", color: "black" },
+            { name: "Hearts", symbol: "♥", color: "red" },
+            { name: "Diamonds", symbol: "♦", color: "red" },
+            { name: "Spades", symbol: "♠", color: "black" }
+        ];
+        const CARD_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+
+        function createShuffledDeck() {
+            const cards = CARD_SUITS.flatMap(suit => CARD_RANKS.map(rank => ({
+                id: `${rank}-${suit.name}`,
+                rank,
+                suit: suit.name,
+                symbol: suit.symbol,
+                color: suit.color
+            })));
+            cards.push(
+                { id: "Joker-1", rank: "Joker", suit: "Joker", symbol: "🃏", color: "joker" },
+                { id: "Joker-2", rank: "Joker", suit: "Joker", symbol: "🃏", color: "joker" }
+            );
+            for (let index = cards.length - 1; index > 0; index -= 1) {
+                const swapIndex = secureRandomInt(index + 1);
+                [cards[index], cards[swapIndex]] = [cards[swapIndex], cards[index]];
+            }
+            return { cards, pullsRemaining: 4 };
+        }
+
+        function isValidCardDeck(deck) {
+            if (!deck || !Array.isArray(deck.cards) || !Number.isInteger(deck.pullsRemaining) ||
+                deck.pullsRemaining < 1 || deck.pullsRemaining > 4 ||
+                deck.cards.length !== 50 + deck.pullsRemaining) return false;
+            const validIds = new Set([
+                ...CARD_SUITS.flatMap(suit => CARD_RANKS.map(rank => `${rank}-${suit.name}`)),
+                "Joker-1", "Joker-2"
+            ]);
+            const ids = deck.cards.map(card => card && card.id);
+            return ids.every(id => validIds.has(id)) && new Set(ids).size === ids.length;
+        }
+
+        function drawCard() {
+            if (!isValidCardDeck(state.cardDeck)) state.cardDeck = createShuffledDeck();
+            const card = state.cardDeck.cards.pop();
+            state.cardDeck.pullsRemaining -= 1;
+            const reshuffled = state.cardDeck.pullsRemaining === 0;
+            if (reshuffled) state.cardDeck = createShuffledDeck();
+            return { card, reshuffled };
+        }
+
+        function updateGameOdds(game) {
+            const isCards = game === "Cards";
+            if (isCards) {
+                const betType = document.getElementById("cardsBetType").value;
+                const isJokerBet = betType === "joker";
+                const winningCards = isJokerBet ? 2 : 26;
+                const multiplier = isJokerBet ? 8 : 2;
+                const chance = winningCards / 54 * 100;
+                const bet = Number(document.getElementById("cardsBet").value) || 0;
+                const payout = Math.round(bet * multiplier * 100) / 100;
+                const name = betType === "red" ? "RED" : betType === "black" ? "BLACK" : "JOKER";
+                document.getElementById("cardsOdds").textContent =
+                    `${chance.toFixed(2)}% chance to draw ${betType === "joker" ? "a joker" : `a ${betType} card`}. A ${formatCredits(bet)} credit bet pays ${formatCredits(payout)} credits on a win.`;
+                document.getElementById("cardsReward").textContent = `${multiplier}×`;
+                document.getElementById("dealerCard").innerHTML =
+                    `<span>BET ON</span><strong>${name}</strong><small>${multiplier}× PAYOUT</small>`;
+                document.getElementById("cardsTableCaption").textContent =
+                    `Pick ${betType === "joker" ? "a joker" : `a ${betType} card`} · ${state.cardDeck && isValidCardDeck(state.cardDeck) ? state.cardDeck.pullsRemaining : 4} pulls until reshuffle`;
+                return;
+            }
+            const bet = Number(document.getElementById("diceBet").value) || 0;
+            const doublePayout = Math.round(bet * 2 * 100) / 100;
+            const triplePayout = Math.round(bet * 3 * 100) / 100;
+            document.getElementById("diceOdds").textContent =
+                `Totals 2–6 or 8–12 pay ${formatCredits(doublePayout)} credits (2×); exactly 7 pays ${formatCredits(triplePayout)} credits (3×).`;
+            document.getElementById("diceReward").textContent = "2× or 3×";
+            document.getElementById("diceTableCaption").textContent =
+                "Roll two dice: totals other than 7 pay 2×; exactly 7 pays 3×.";
+        }
+
+        function showPage(page) {
+            const protectedPages = ["dashboard", "cards", "dice", "roulette", "cashout", "redeem", "admin"];
+            if (protectedPages.includes(page) && !currentUser) page = "login";
+            if (page === "redeem" && currentUser && currentUser.isAdmin) page = "admin";
+            if (page === "admin" && !currentUser.isAdmin) page = "dashboard";
+
+            if (page === "adminLogin") {
+                history.replaceState(null, "", "#admin-login");
+            } else if (location.hash === "#admin-login") {
+                history.replaceState(null, "", location.pathname + location.search);
+            }
+            activePage = page;
+            document.querySelectorAll(".page").forEach(section => {
+                section.hidden = section.id !== `${page}Page`;
+            });
+            const isLoggedIn = Boolean(currentUser);
+            document.getElementById("mainNav").hidden = !isLoggedIn;
+            document.getElementById("accountNav").hidden = !isLoggedIn;
+            document.getElementById("guestNav").hidden = isLoggedIn;
+            document.getElementById("adminNav").hidden = !isLoggedIn || !currentUser.isAdmin;
+            document.getElementById("redeemNav").hidden = !isLoggedIn || currentUser.isAdmin;
+            document.getElementById("navUsername").textContent = isLoggedIn ? currentUser.username : "";
+            clearMessage();
+
+            if (page === "dashboard") loadDashboard();
+            if (page === "cards") loadCards();
+            if (page === "dice") loadDice();
+            if (page === "roulette") loadRoulette();
+            if (page === "cashout") loadCashout();
+            if (page === "redeem") loadRedeem();
+            if (page === "admin") loadAdmin();
+        }
+
+        async function register(event) {
+            event.preventDefault();
+            const username = document.getElementById("registerUsername").value.trim();
+            const password = document.getElementById("registerPassword").value;
+            const referralCode = document.getElementById("registerReferralCode").value.trim().toUpperCase();
+            const bonusCode = document.getElementById("registerBonusCode").value.trim().toUpperCase();
+            if (!username || !password) return showMessage("Username and password are required.", true);
+            if (username.toLowerCase() === ADMIN_USERNAME || state.adminAccounts.some(admin => admin.username.toLowerCase() === username.toLowerCase())) {
+                return showMessage("That username is reserved.", true);
+            }
+            if (password.length < 8) return showMessage("Password must be at least 8 characters.", true);
+            if (userByName(username)) return showMessage("That username is already taken.", true);
+
+            const referrer = referralCode
+                ? state.users.find(user => user.referralCode.toUpperCase() === referralCode)
+                : null;
+            if (referralCode && (!referrer || referrer.disabled || referrer.username.toLowerCase() === username.toLowerCase())) {
+                return showMessage("That referral code is invalid.", true);
+            }
+            const signupCode = bonusCode ? state.creditCodes.find(code => code.id === bonusCode) : null;
+            if (bonusCode && (!signupCode || signupCode.kind !== "signup" || signupCode.registeredBy)) {
+                return showMessage("That signup bonus code is invalid or has already been used.", true);
+            }
+            const startingCredits = (referrer ? 10 : 0) + (signupCode ? signupCode.amount : 0);
+            if (!Number.isSafeInteger(startingCredits) || startingCredits < 0 ||
+                (signupCode && (!Number.isSafeInteger(signupCode.amount) || signupCode.amount <= 0)) ||
+                (referrer && !Number.isSafeInteger(referrer.credits + 10))) {
+                return showMessage("The signup bonuses could not be applied.", true);
+            }
+            const account = normalizeAccount({
+                username,
+                ...await hashPassword(password),
+                credits: startingCredits,
+                history: [],
+                createdAt: new Date().toISOString(),
+                referralCode: generateReferralCode(),
+                referredBy: referrer ? referrer.username : ""
+            });
+            if (signupCode) signupCode.registeredBy = username;
+            const previousReferrerCredits = referrer ? referrer.credits : null;
+            if (referrer) referrer.credits += 10;
+            state.users.push(account);
+            try {
+                await saveState();
+            } catch (error) {
+                state.users = state.users.filter(user => user !== account);
+                if (referrer) referrer.credits = previousReferrerCredits;
+                if (signupCode) signupCode.registeredBy = null;
+                throw error;
+            }
+            document.getElementById("registerForm").reset();
+            showPage("login");
+            showMessage(`Account created${startingCredits ? ` with ${formatCredits(startingCredits)} bonus credits` : ""}. Log in to continue.`);
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            const username = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            const user = userByName(username);
+            if (!user || !(await verifyPassword(password, user))) return showMessage("Invalid username or password.", true);
+            if (user.disabled) return showMessage("This account is inactive. Contact an administrator.", true);
+            currentUser = user;
+            if (!currentUser.referralCode) {
+                currentUser.referralCode = generateReferralCode();
+                await saveCurrentUser();
+            }
+            document.getElementById("loginForm").reset();
+            showPage("dashboard");
+            const dailyReward = await claimDailyLoginReward();
+            showDailyRewardDialog(dailyReward);
+        }
+
+        async function adminLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById("adminLoginUsername").value.trim();
+            const password = document.getElementById("adminLoginPassword").value;
+            if (username.toLowerCase() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                currentUser = { username: ADMIN_USERNAME, isAdmin: true };
+                document.getElementById("adminLoginForm").reset();
+                return showPage("admin");
+            }
+            const admin = state.adminAccounts.find(account => account.username.toLowerCase() === username.toLowerCase());
+            if (!admin || !(await verifyPassword(password, admin))) {
+                return showMessage("Invalid administrator username or password.", true);
+            }
+            currentUser = { username: admin.username, isAdmin: true };
+            document.getElementById("adminLoginForm").reset();
+            showPage("admin");
+        }
+
+        function logout() {
+            currentUser = null;
+            showPage("login");
+        }
+
+        async function saveCurrentUser() {
+            const index = state.users.findIndex(user => user.username === currentUser.username);
+            if (index !== -1) state.users[index] = currentUser;
+            await saveState();
+        }
+
+        function loadDashboard() {
+            document.getElementById("dashboardUsername").textContent = currentUser.username;
+            document.getElementById("dashboardCredits").textContent = formatCredits(currentUser.credits);
+            document.getElementById("loginStreak").textContent =
+                `${currentUser.loginStreak}-day streak · ${currentUser.loginStreak > 0 && currentUser.loginStreak % 3 === 0 ? "spin earned" : `${3 - currentUser.loginStreak % 3} day${3 - currentUser.loginStreak % 3 === 1 ? "" : "s"} to next spin`}`;
+            document.getElementById("dashboardSpins").textContent = currentUser.rouletteSpins;
+            document.getElementById("dashboardReferralCode").textContent = currentUser.referralCode;
+            document.getElementById("dailyRewardStatus").textContent =
+                `Log in daily for 1 credit. Every third consecutive day earns a guaranteed roulette spin. Current streak: ${currentUser.loginStreak} day${currentUser.loginStreak === 1 ? "" : "s"}.`;
+        }
+
+        async function claimDailyLoginReward() {
+            const today = new Date().toISOString().slice(0, 10);
+            if (currentUser.lastLoginDate === today) {
+                return { alreadyClaimed: true, earnedSpin: false };
+            }
+
+            const todayNumber = Math.floor(Date.parse(`${today}T00:00:00Z`) / 86400000);
+            const lastLoginNumber = /^\d{4}-\d{2}-\d{2}$/.test(currentUser.lastLoginDate)
+                ? Math.floor(Date.parse(`${currentUser.lastLoginDate}T00:00:00Z`) / 86400000)
+                : NaN;
+            const previous = {
+                credits: currentUser.credits,
+                lastLoginDate: currentUser.lastLoginDate,
+                loginStreak: currentUser.loginStreak,
+                rouletteSpins: currentUser.rouletteSpins
+            };
+            currentUser.loginStreak = todayNumber - lastLoginNumber === 1 ? currentUser.loginStreak + 1 : 1;
+            currentUser.lastLoginDate = today;
+            currentUser.credits += 1;
+            const earnedSpin = currentUser.loginStreak % 3 === 0;
+            if (earnedSpin) currentUser.rouletteSpins += 1;
+
+            try {
+                await saveCurrentUser();
+            } catch (error) {
+                Object.assign(currentUser, previous);
+                throw error;
+            }
+            loadDashboard();
+            showMessage(`Daily login reward: 1 credit${earnedSpin ? " and 1 guaranteed roulette spin for your 3-day streak" : ""}.`);
+            return { alreadyClaimed: false, earnedSpin };
+        }
+
+        function showDailyRewardDialog(reward) {
+            const alreadyClaimed = reward.alreadyClaimed;
+            document.getElementById("dailyRewardTitle").textContent =
+                alreadyClaimed ? "Your daily reward is collected" : "Your daily reward is here!";
+            document.getElementById("dailyRewardDetails").textContent = alreadyClaimed
+                ? `You already collected today's reward. Come back tomorrow for another daily credit.`
+                : `Today's login reward has been added to your balance.`;
+            document.getElementById("dailyRewardAmount").textContent =
+                alreadyClaimed ? "1 credit collected today" : "+1 credit";
+            document.getElementById("dailyRewardValue").textContent =
+                alreadyClaimed ? "1 credit = $1.00 USD demo value" : "= $1.00 USD demo value";
+            document.getElementById("dailyRewardSpin").textContent = reward.earnedSpin
+                ? "You also earned a guaranteed roulette spin for your 3-day login streak!"
+                : `Current streak: ${currentUser.loginStreak} day${currentUser.loginStreak === 1 ? "" : "s"}. Every third consecutive day earns a guaranteed roulette spin.`;
+            document.getElementById("dailyRewardDialog").showModal();
+        }
+
+        function loadCards() {
+            document.getElementById("cardsCredits").textContent = `${formatCredits(currentUser.credits)} cr`;
+            updateGameOdds("Cards");
+        }
+
+        async function playGame(event, game) {
+            event.preventDefault();
+            const isCards = game === "Cards";
+            const betInput = document.getElementById(isCards ? "cardsBet" : "diceBet");
+            const submitButton = event.submitter || document.querySelector(`#${isCards ? "cardsForm" : "diceForm"} button[type="submit"]`);
+            const bet = Number(betInput.value);
+            if (!Number.isSafeInteger(bet) || bet <= 0) return showMessage("Enter a positive whole-number bet.", true);
+            if (bet > currentUser.credits) return showMessage("Not enough credits.", true);
+
+            const betType = isCards ? document.getElementById("cardsBetType").value : null;
+            const totalOutcomes = isCards ? 54 : 36;
+            const winningOutcomes = isCards ? (betType === "joker" ? 2 : 26) : 36;
+            if (isCards && !["red", "black", "joker"].includes(betType)) {
+                return showMessage("Choose a valid bet.", true);
+            }
+
+            if (isCards) document.getElementById("cardsConfetti").replaceChildren();
+            const drawnCard = isCards ? drawCard() : null;
+            const diceRoll = isCards ? null : {
+                first: secureRandomInt(6) + 1,
+                second: secureRandomInt(6) + 1
+            };
+            if (diceRoll) diceRoll.total = diceRoll.first + diceRoll.second;
+            const multiplier = isCards ? (betType === "joker" ? 8 : 2) : diceRoll.total === 7 ? 3 : 2;
+            const result = isCards
+                ? (drawnCard.card.color === betType ? "win" : "loss")
+                : "win";
+            const payout = result === "win" ? Math.round(bet * multiplier * 100) / 100 : 0;
+            if (submitButton) submitButton.disabled = true;
+            try {
+                if (!isCards) await animateDiceRoll(diceRoll, result);
+
+                currentUser.credits += payout - bet;
+                currentUser.history.push({
+                    game, bet, multiplier,
+                    ...(isCards ? {
+                        betType,
+                        card: drawnCard.card.rank === "Joker"
+                            ? "Joker"
+                            : `${drawnCard.card.rank} of ${drawnCard.card.suit}`,
+                        chance: winningOutcomes / totalOutcomes
+                    } : {
+                        dice: [diceRoll.first, diceRoll.second],
+                        total: diceRoll.total
+                    }),
+                    result, payout,
+                    createdAt: new Date().toLocaleString()
+                });
+                await saveCurrentUser();
+
+                if (isCards) {
+                    const card = drawnCard.card;
+                    const playerCard = document.getElementById("playerCard");
+                    if (card.rank === "Joker") {
+                        playerCard.innerHTML = "<span>JOKER</span><strong>🃏</strong><small>JOKER</small>";
+                        playerCard.setAttribute("aria-label", "Your drawn card: Joker");
+                    } else {
+                        playerCard.innerHTML = `<span>${card.symbol}</span><strong>${card.rank}</strong><small>${card.symbol}</small>`;
+                        playerCard.setAttribute("aria-label", `Your drawn card: ${card.rank} of ${card.suit}`);
+                    }
+                    playerCard.classList.toggle("card-red", card.color === "red");
+                    playerCard.classList.toggle("card-black", card.color === "black");
+                    playerCard.classList.toggle("card-joker", card.color === "joker");
+                    playerCard.classList.remove("card-back", "draw-win", "draw-loss");
+                    void playerCard.offsetWidth;
+                    playerCard.classList.add(result === "win" ? "draw-win" : "draw-loss");
+                    loadCards();
+                    const cardName = card.rank === "Joker" ? "Joker" : `${card.rank} of ${card.suit}`;
+                    document.getElementById("cardsTableCaption").textContent =
+                        `${cardName} · ${result === "win" ? "You won" : "No win"}${drawnCard.reshuffled ? " · Deck reshuffled" : ` · ${state.cardDeck.pullsRemaining} pulls until reshuffle`}`;
+                    if (result === "win") showConfetti("cardsConfetti");
+                } else {
+                    loadDice();
+                    document.getElementById("diceTotal").textContent = diceRoll.total;
+                    document.getElementById("diceTableCaption").textContent =
+                        `You rolled ${diceRoll.first} + ${diceRoll.second} = ${diceRoll.total} · ${diceRoll.total === 7 ? "Triple" : "Double"} payout`;
+                    if (result === "win") showConfetti("diceConfetti");
+                }
+                if (result === "win") playWinMusic();
+            } finally {
+                if (submitButton) submitButton.disabled = false;
+            }
+
+            showMessage(result === "win"
+                ? `You won! ${formatCredits(bet)} × ${formatCredits(multiplier)} = ${formatCredits(payout)} credits paid, including your bet.`
+                : `No win this round. ${formatCredits(bet)} credits were lost.`);
+        }
+
+        function wait(milliseconds) {
+            return new Promise(resolve => window.setTimeout(resolve, milliseconds));
+        }
+
+        async function animateDiceRoll(finalRoll, result) {
+            const firstDie = document.getElementById("playerDice");
+            const secondDie = document.getElementById("playerDiceSecond");
+            const faces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            firstDie.classList.remove("draw-win", "draw-loss", "rolling", "shake-loss");
+            secondDie.classList.remove("draw-win", "draw-loss", "rolling", "shake-loss");
+            document.getElementById("diceConfetti").replaceChildren();
+            document.getElementById("diceTotal").textContent = "…";
+            if (!reduceMotion) {
+                firstDie.classList.add("rolling");
+                secondDie.classList.add("rolling");
+                const start = performance.now();
+                while (performance.now() - start < 1000) {
+                    firstDie.textContent = faces[secureRandomInt(faces.length)];
+                    secondDie.textContent = faces[secureRandomInt(faces.length)];
+                    await wait(85);
+                }
+            }
+
+            firstDie.textContent = faces[finalRoll.first - 1];
+            secondDie.textContent = faces[finalRoll.second - 1];
+            document.getElementById("diceTotal").textContent = finalRoll.total;
+            firstDie.classList.remove("rolling");
+            secondDie.classList.remove("rolling");
+            firstDie.classList.add(result === "win" ? "draw-win" : "draw-loss");
+            secondDie.classList.add(result === "win" ? "draw-win" : "draw-loss");
+            if (result === "loss" && !reduceMotion) {
+                firstDie.classList.add("shake-loss");
+                secondDie.classList.add("shake-loss");
+                firstDie.addEventListener("animationend", () => firstDie.classList.remove("shake-loss"), { once: true });
+                secondDie.addEventListener("animationend", () => secondDie.classList.remove("shake-loss"), { once: true });
+            }
+        }
+
+        function showConfetti(layerId) {
+            const layer = document.getElementById(layerId);
+            const colors = ["#5de2bb", "#43d6ad", "#f4d36a", "#f4f7ed", "#87f5cf", "#b8a0ff"];
+            const fragment = document.createDocumentFragment();
+            for (let index = 0; index < 64; index += 1) {
+                const piece = document.createElement("span");
+                piece.className = "confetti-piece";
+                piece.style.setProperty("--confetti-x", `${secureRandomInt(101)}%`);
+                piece.style.setProperty("--confetti-delay", `${secureRandomInt(36) / 100}s`);
+                piece.style.setProperty("--confetti-duration", `${1.2 + secureRandomInt(9) / 10}s`);
+                piece.style.setProperty("--confetti-color", colors[secureRandomInt(colors.length)]);
+                piece.style.setProperty("--confetti-spin", `${secureRandomInt(720) - 360}deg`);
+                fragment.append(piece);
+            }
+            layer.replaceChildren(fragment);
+            window.setTimeout(() => layer.replaceChildren(), 2800);
+        }
+
+        function playWinMusic() {
+            const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextConstructor) return;
+
+            const audioContext = new AudioContextConstructor();
+            const notes = [
+                { frequency: 523.25, start: 0, duration: .18 },
+                { frequency: 659.25, start: .16, duration: .18 },
+                { frequency: 783.99, start: .32, duration: .18 },
+                { frequency: 1046.5, start: .5, duration: .42 }
+            ];
+            audioContext.resume().then(() => {
+                const now = audioContext.currentTime;
+                notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    oscillator.type = "triangle";
+                    oscillator.frequency.value = note.frequency;
+                    gain.gain.setValueAtTime(.0001, now + note.start);
+                    gain.gain.exponentialRampToValueAtTime(.14, now + note.start + .025);
+                    gain.gain.exponentialRampToValueAtTime(.0001, now + note.start + note.duration);
+                    oscillator.connect(gain);
+                    gain.connect(audioContext.destination);
+                    oscillator.start(now + note.start);
+                    oscillator.stop(now + note.start + note.duration);
+                });
+                window.setTimeout(() => audioContext.close(), 1400);
+            }).catch(error => {
+                console.error("Win music could not play:", error);
+                audioContext.close();
+            });
+        }
+
+        function loadDice() {
+            document.getElementById("diceCredits").textContent = `${formatCredits(currentUser.credits)} cr`;
+            updateGameOdds("Dice");
+        }
+
+        function loadRoulette() {
+            document.getElementById("rouletteCredits").textContent = `${formatCredits(currentUser.credits)} cr`;
+            document.getElementById("rouletteSpins").textContent = currentUser.rouletteSpins;
+            document.getElementById("rouletteSpinCount").textContent =
+                `${currentUser.rouletteSpins} SPIN${currentUser.rouletteSpins === 1 ? "" : "S"}`;
+            document.getElementById("rouletteSpinButton").disabled = currentUser.rouletteSpins === 0;
+        }
+
+        async function spinRoulette() {
+            if (!currentUser || currentUser.isAdmin) return showMessage("Sign in with a player account to use the rewards wheel.", true);
+            if (currentUser.rouletteSpins < 1) return showMessage("You don't have a guaranteed spin available yet.", true);
+
+            const button = document.getElementById("rouletteSpinButton");
+            const wheel = document.getElementById("rouletteWheel");
+            button.disabled = true;
+            const previous = {
+                credits: currentUser.credits,
+                rouletteSpins: currentUser.rouletteSpins,
+                historyLength: currentUser.history.length
+            };
+            let createdCode = null;
+            try {
+                const prizeIndex = secureRandomInt(ROULETTE_PRIZES.length);
+                const prize = ROULETTE_PRIZES[prizeIndex];
+                const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                const currentRotation = Number(wheel.dataset.rotation || 0);
+                const sliceAngle = 360 / ROULETTE_PRIZES.length;
+                const targetOffset = (360 - (prizeIndex + 0.5) * sliceAngle) % 360;
+                const nextRotation = Math.ceil(currentRotation / 360) * 360 + 1080 + targetOffset;
+                wheel.dataset.rotation = String(nextRotation);
+                wheel.style.transform = `rotate(${nextRotation}deg)`;
+                if (!reduceMotion) await wait(1200);
+
+                currentUser.rouletteSpins -= 1;
+                let resultText = `You won ${prize.label}!`;
+                if (prize.type === "credits") {
+                    currentUser.credits += prize.amount;
+                } else if (prize.type === "spins") {
+                    currentUser.rouletteSpins += prize.amount;
+                } else {
+                    const code = generateCodeId();
+                    createdCode = {
+                        id: code,
+                        amount: prize.amount,
+                        kind: "credit",
+                        source: "roulette",
+                        createdAt: new Date().toISOString(),
+                        redeemedBy: null,
+                        redeemedAt: null
+                    };
+                    state.creditCodes.push(createdCode);
+                    resultText += ` Redeem code: ${code}`;
+                }
+                currentUser.history.push({
+                    game: "Roulette",
+                    result: "win",
+                    prize: prize.label,
+                    payout: prize.type === "credits" ? prize.amount : 0,
+                    createdAt: new Date().toLocaleString()
+                });
+                await saveCurrentUser();
+                loadRoulette();
+                document.getElementById("rouletteResult").textContent = resultText;
+                showConfetti("rouletteConfetti");
+                playWinMusic();
+                showMessage(resultText);
+            } catch (error) {
+                currentUser.credits = previous.credits;
+                currentUser.rouletteSpins = previous.rouletteSpins;
+                currentUser.history.length = previous.historyLength;
+                if (createdCode) state.creditCodes = state.creditCodes.filter(code => code !== createdCode);
+                throw error;
+            } finally {
+                button.disabled = currentUser.rouletteSpins === 0;
+            }
+        }
+
+        function loadCashout() {
+            document.getElementById("cashoutCredits").textContent = formatCredits(currentUser.credits);
+            document.getElementById("cashoutAmount").max = currentUser.credits;
+            updateCashoutUsd();
+            const requests = state.cashouts.filter(item => item.username === currentUser.username);
+            document.getElementById("cashoutHistory").innerHTML = requests.length
+                ? requests.map(item => `<tr><td class="table-strong">${item.amount} cr</td><td><code>${escapeHtml(item.code)}</code></td><td><span class="status status-${escapeHtml(item.status)}">${escapeHtml(item.status)}</span></td><td>${escapeHtml(item.createdAt)}</td></tr>`).join("")
+                : '<tr><td class="empty-state" colspan="4">No cash-out requests yet.</td></tr>';
+        }
+
+        function loadRedeem() {
+            document.getElementById("redeemCredits").textContent = formatCredits(currentUser.credits);
+        }
+
+        function updateCashoutUsd() {
+            const amount = Number(document.getElementById("cashoutAmount").value);
+            document.getElementById("cashoutUsd").textContent =
+                Number.isSafeInteger(amount) && amount > 0 ? `${formatCredits(amount)} credits = ${formatUsd(amount)} USD demo value.` : "";
+        }
+
+        async function redeemCreditCode(event) {
+            event.preventDefault();
+            if (!currentUser || currentUser.isAdmin) return showMessage("Sign in with a player account to redeem a credit code.", true);
+            const code = document.getElementById("redeemCode").value.trim().toUpperCase();
+            if (!code) return showMessage("Enter a credit code.", true);
+
+            const transaction = database.transaction(["accounts", "creditCodes"], "readwrite");
+            const completed = transactionDone(transaction);
+            const accountRequest = transaction.objectStore("accounts").get(currentUser.username.toLowerCase());
+            const codeRequest = transaction.objectStore("creditCodes").get(code);
+            const [accountRecord, creditCode] = await Promise.all([
+                requestResult(accountRequest),
+                requestResult(codeRequest)
+            ]);
+            if (!accountRecord || accountRecord.disabled || !creditCode || creditCode.kind === "signup" || creditCode.redeemedBy) {
+                await completed;
+                return showMessage("That code is invalid or has already been redeemed.", true);
+            }
+
+            const updatedAccount = normalizeAccount(accountRecord);
+            const newBalance = Math.round((updatedAccount.credits + creditCode.amount) * 100) / 100;
+            if (!Number.isSafeInteger(creditCode.amount) || creditCode.amount <= 0 ||
+                !Number.isFinite(newBalance) || newBalance > Number.MAX_SAFE_INTEGER) {
+                await completed;
+                return showMessage("This code could not be applied to the account balance.", true);
+            }
+            updatedAccount.credits = newBalance;
+            creditCode.redeemedBy = updatedAccount.username;
+            creditCode.redeemedAt = new Date().toISOString();
+            transaction.objectStore("accounts").put(updatedAccount);
+            transaction.objectStore("creditCodes").put(creditCode);
+            await completed;
+
+            state.users = state.users.map(user => user.key === updatedAccount.key ? updatedAccount : user);
+            state.creditCodes = state.creditCodes.map(item => item.id === creditCode.id ? creditCode : item);
+            currentUser = updatedAccount;
+            document.getElementById("redeemForm").reset();
+            loadRedeem();
+            showMessage(`${formatCredits(creditCode.amount)} credits added to your account.`);
+        }
+
+        async function requestCashout(event) {
+            event.preventDefault();
+            const amount = Number(document.getElementById("cashoutAmount").value);
+            if (!Number.isSafeInteger(amount) || amount <= 0) return showMessage("Enter a positive whole-number amount.", true);
+            if (amount > currentUser.credits) return showMessage("Not enough credits.", true);
+
+            const code = crypto.randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase();
+            state.cashouts.push({
+                id: crypto.randomUUID(), username: currentUser.username, amount, code,
+                status: "pending", createdAt: new Date().toLocaleString()
+            });
+            await saveState();
+            document.getElementById("cashoutForm").reset();
+            loadCashout();
+            showMessage(`Demo request created for ${amount} credits. Code: ${code}. No real payout will be made.`);
+        }
+
+        function loadAdmin() {
+            document.getElementById("adminUserSelect").innerHTML = state.users.length
+                ? state.users.map(user => `<option value="${escapeHtml(user.username)}">${escapeHtml(user.username)} — ${formatCredits(user.credits)} credits</option>`).join("")
+                : '<option value="" disabled selected>No player accounts yet</option>';
+            loadAdminAccountsAccess();
+            loadAdminCreditCodes();
+            loadAdminAccounts();
+            loadAdminGameHistory();
+            loadAdminCashouts();
+        }
+
+        function loadAdminAccountsAccess() {
+            const accounts = [{ username: ADMIN_USERNAME, type: "Primary administrator" }, ...state.adminAccounts.map(admin => ({
+                username: admin.username,
+                type: "Additional administrator"
+            }))];
+            const atLimit = accounts.length >= 2;
+            document.getElementById("adminAccountCount").textContent = `${accounts.length} of 2 accounts`;
+            document.getElementById("adminAccountList").innerHTML = accounts
+                .map(account => `<tr><td class="table-strong">${escapeHtml(account.username)}</td><td>${account.type}</td></tr>`).join("");
+            document.querySelectorAll("#createAdminForm input, #createAdminForm button").forEach(input => {
+                input.disabled = atLimit;
+            });
+            document.getElementById("createAdminForm").hidden = atLimit;
+            if (atLimit) {
+                document.getElementById("adminAccountList").innerHTML += '<tr><td class="empty-state" colspan="2">The administrator account limit has been reached.</td></tr>';
+            }
+        }
+
+        async function createAdminAccount(event) {
+            event.preventDefault();
+            if (!currentUser || !currentUser.isAdmin) return showMessage("Only an administrator can create administrator accounts.", true);
+            if (state.adminAccounts.length >= 1) return showMessage("The site is limited to two administrator accounts.", true);
+            const username = document.getElementById("newAdminUsername").value.trim();
+            const password = document.getElementById("newAdminPassword").value;
+            if (username.length < 3 || username.length > 32) return showMessage("Admin usernames must be 3 to 32 characters.", true);
+            if (password.length < 8) return showMessage("Admin passwords must be at least 8 characters.", true);
+            if (username.toLowerCase() === ADMIN_USERNAME || userByName(username) ||
+                state.adminAccounts.some(admin => admin.username.toLowerCase() === username.toLowerCase())) {
+                return showMessage("That username is already in use or reserved.", true);
+            }
+
+            state.adminAccounts.push({
+                username,
+                ...await hashPassword(password),
+                createdAt: new Date().toISOString()
+            });
+            await saveState();
+            document.getElementById("createAdminForm").reset();
+            loadAdmin();
+            showMessage(`Administrator account ${username} created. The two-account limit is now reached.`);
+        }
+
+        async function createCreditCode(event) {
+            event.preventDefault();
+            if (!currentUser || !currentUser.isAdmin) return showMessage("Only an administrator can issue credit codes.", true);
+            const amount = Number(document.getElementById("adminCodeAmount").value);
+            const kind = document.getElementById("adminCodeType").value;
+            if (!Number.isSafeInteger(amount) || amount <= 0) return showMessage("Enter a positive whole-number credit amount.", true);
+            if (!["credit", "signup"].includes(kind)) return showMessage("Choose a valid code type.", true);
+            const code = generateCodeId();
+
+            state.creditCodes.push({
+                id: code,
+                amount,
+                kind,
+                createdAt: new Date().toISOString(),
+                redeemedBy: null,
+                registeredBy: null,
+                redeemedAt: null
+            });
+            await saveState();
+            document.getElementById("createCreditCodeForm").reset();
+            loadAdminCreditCodes();
+            showMessage(`${kind === "signup" ? "Signup bonus" : "Credit"} code created: ${code} (${formatCredits(amount)} credits).`);
+        }
+
+        function loadAdminCreditCodes() {
+            document.getElementById("adminCreditCodes").innerHTML = state.creditCodes.length
+                ? state.creditCodes.slice().reverse().map(item => {
+                    const usedBy = item.kind === "signup" ? item.registeredBy : item.redeemedBy;
+                    const status = usedBy ? (item.kind === "signup" ? "Used at signup" : "Redeemed") : "Available";
+                    return `<tr><td><code>${escapeHtml(item.id)}</code></td><td>${item.kind === "signup" ? "Signup bonus" : "Credit"}</td><td>${formatCredits(item.amount)} cr</td><td><span class="status status-${usedBy ? "approved" : "pending"}">${status}</span></td><td>${usedBy ? escapeHtml(usedBy) : "—"}</td></tr>`;
+                }).join("")
+                : '<tr><td class="empty-state" colspan="5">No credit codes have been issued.</td></tr>';
+        }
+
+        function loadAdminAccounts() {
+            document.getElementById("accountCount").textContent = `${state.users.length} saved`;
+            document.getElementById("adminAccounts").innerHTML = state.users.length
+                ? state.users.map(user => {
+                    const status = user.disabled ? "Inactive" : "Active";
+                    const action = user.disabled ? "Reactivate" : "Deactivate";
+                    const createdAt = new Date(user.createdAt).toLocaleDateString();
+                    return `<tr><td class="table-strong">${escapeHtml(user.username)}</td><td>${escapeHtml(createdAt)}</td><td>${formatCredits(user.credits)} cr</td><td>${user.history.length}</td><td><span class="status status-${user.disabled ? "rejected" : "approved"}">${status}</span></td><td><button class="button button-small button-secondary" type="button" onclick="handleDatabaseAction(() => setAccountStatus('${escapeHtml(user.key)}', ${!user.disabled}))()">${action}</button></td></tr>`;
+                }).join("")
+                : '<tr><td class="empty-state" colspan="6">No player accounts have been created.</td></tr>';
+        }
+
+        function loadAdminGameHistory() {
+            const games = state.users.flatMap(user => user.history.map(game => ({ username: user.username, ...game }))).reverse();
+            document.getElementById("adminGameHistory").innerHTML = games.length
+                ? games.map(game => {
+                    const bet = game.prize || (game.betType ? `${game.betType[0].toUpperCase()}${game.betType.slice(1)}` : `${formatCredits(game.bet)} cr`);
+                    const draw = game.prize || game.card || (Array.isArray(game.dice) ? `${game.dice[0]} + ${game.dice[1]} = ${game.total}` : "—");
+                    return `<tr><td class="table-strong">${escapeHtml(game.username)}</td><td>${escapeHtml(game.game)}</td><td>${escapeHtml(bet)}</td><td>${escapeHtml(draw)}</td><td><span class="status status-${escapeHtml(game.result)}">${escapeHtml(game.result)}</span></td><td>${formatCredits(game.payout)} cr</td><td>${escapeHtml(game.createdAt)}</td></tr>`;
+                }).join("")
+                : '<tr><td class="empty-state" colspan="7">No player games have been recorded.</td></tr>';
+        }
+
+        async function setAccountStatus(key, disabled) {
+            const user = state.users.find(account => account.key === key);
+            if (!user) return showMessage("Account not found.", true);
+            user.disabled = disabled;
+            await saveState();
+            loadAdmin();
+            showMessage(`${user.username} account ${disabled ? "deactivated" : "reactivated"}.`);
+        }
+
+        async function addCredits(event) {
+            event.preventDefault();
+            const username = document.getElementById("adminUserSelect").value;
+            const amount = Number(document.getElementById("adminCreditAmount").value);
+            const user = userByName(username);
+            if (!user || !Number.isSafeInteger(amount) || amount <= 0) return showMessage("Select a player and enter a positive whole-number amount.", true);
+            user.credits += amount;
+            await saveState();
+            document.getElementById("creditsForm").reset();
+            loadAdmin();
+            showMessage(`Added ${amount} demo credits to ${username}.`);
+        }
+
+        function loadAdminCashouts() {
+            const pending = state.cashouts.filter(item => item.status === "pending");
+            document.getElementById("adminCashouts").innerHTML = pending.length
+                ? pending.map(item => `<tr><td class="table-strong">${escapeHtml(item.username)}</td><td>${item.amount} cr</td><td><code>${escapeHtml(item.code)}</code></td><td>${escapeHtml(item.createdAt)}</td><td><div class="table-actions"><button class="button button-small button-primary" type="button" onclick="handleDatabaseAction(() => processCashout('${item.id}', 'approved'))()">Approve</button><button class="button button-small button-secondary" type="button" onclick="handleDatabaseAction(() => processCashout('${item.id}', 'rejected'))()">Reject</button></div></td></tr>`).join("")
+                : '<tr><td class="empty-state" colspan="5">No pending demo requests.</td></tr>';
+        }
+
+        async function processCashout(id, status) {
+            const request = state.cashouts.find(item => item.id === id && item.status === "pending");
+            if (!request) return showMessage("That request is no longer pending.", true);
+            if (status === "approved") {
+                const user = userByName(request.username);
+                if (!user || user.credits < request.amount) {
+                    return showMessage("The player no longer has enough credits to approve this request.", true);
+                }
+                user.credits -= request.amount;
+            }
+            request.status = status;
+            await saveState();
+            if (status === "approved" && currentUser.username === request.username) {
+                currentUser = userByName(request.username);
+            }
+            loadAdminCashouts();
+            showMessage(`Demo cash-out request ${status}. No actual payment was made.`);
+        }
+
+        function handleDatabaseAction(action) {
+            return async event => {
+                if (!databaseReady) {
+                    showMessage("The account database is still opening. Please wait a moment and try again.", true);
+                    return;
+                }
+                try {
+                    await action(event);
+                } catch (error) {
+                    console.error("Win2x database operation failed:", error);
+                    showMessage(error.message || "The database operation failed. Your changes were not saved.", true);
+                }
+            };
+        }
+
+        async function copyReferralCode() {
+            try {
+                await navigator.clipboard.writeText(currentUser.referralCode);
+                showMessage("Referral code copied.");
+            } catch (error) {
+                console.error("Referral code could not be copied:", error);
+                showMessage("Could not copy the referral code. Select and copy it manually.", true);
+            }
+        }
+
+        document.getElementById("loginForm").addEventListener("submit", handleDatabaseAction(login));
+        document.getElementById("adminLoginForm").addEventListener("submit", handleDatabaseAction(adminLogin));
+        document.getElementById("registerForm").addEventListener("submit", handleDatabaseAction(register));
+        document.getElementById("cardsForm").addEventListener("submit", handleDatabaseAction(event => playGame(event, "Cards")));
+        document.getElementById("diceForm").addEventListener("submit", handleDatabaseAction(event => playGame(event, "Dice")));
+        document.getElementById("cashoutForm").addEventListener("submit", handleDatabaseAction(requestCashout));
+        document.getElementById("redeemForm").addEventListener("submit", handleDatabaseAction(redeemCreditCode));
+        document.getElementById("rouletteSpinButton").addEventListener("click", handleDatabaseAction(spinRoulette));
+        document.getElementById("createAdminForm").addEventListener("submit", handleDatabaseAction(createAdminAccount));
+        document.getElementById("createCreditCodeForm").addEventListener("submit", handleDatabaseAction(createCreditCode));
+        document.getElementById("creditsForm").addEventListener("submit", handleDatabaseAction(addCredits));
+        document.getElementById("cardsBetType").addEventListener("change", () => updateGameOdds("Cards"));
+        document.getElementById("cardsBet").addEventListener("input", () => updateGameOdds("Cards"));
+        document.getElementById("diceBet").addEventListener("input", () => updateGameOdds("Dice"));
+        document.getElementById("cashoutAmount").addEventListener("input", updateCashoutUsd);
+        document.getElementById("copyReferralCode").addEventListener("click", handleDatabaseAction(copyReferralCode));
+        document.getElementById("dailyRewardClose").addEventListener("click", () => {
+            document.getElementById("dailyRewardDialog").close();
+        });
+        loadState().then(loaded => {
+            state = loaded;
+            databaseReady = true;
+            showPage(location.hash === "#admin-login" ? "adminLogin" : "login");
+        }).catch(error => {
+            console.error("Win2x database could not start:", error);
+            showMessage(error.message || "Could not open the account database. Use a modern browser and reload.", true);
+        });
+    </script>
+</body>
+</html>
